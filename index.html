@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<meta charset=UTF-8>
+<title>Test validate html5 form</title>
+<body>
+<form id=1 data-vhf>
+    <input name=name required pattern=[^\^\$\\`~!@#%&amp;\*\(\)\-=\[\]\|;:&apos;&quot;<\x3e\?]+>
+    <keygen name=key>
+    <input type=submit>
+</form>
+<input type=number name=number form=1 required min=2000-01-01>
+<script src="//ajax.googleapis.com/ajax/libs/jquery/1.8.3/jquery.min.js"></script>
+<script src="validatehtml5form.js"></script>
+<script>
+    $('form').validateHtml5Form();
+</script>
+</body>
