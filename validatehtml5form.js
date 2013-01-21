@@ -1,12 +1,13 @@
 (function($){
 	$.fn.validateHtml5Form = function(){
-	    emrx = /^[a-zA-Z0-9.!#$%&’*+/=?^_`{|}~-]+@[a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)*$/;
+	    var emrx = /^[a-zA-Z0-9.!#$%&’*+/=?^_`{|}~-]+@[a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)*$/;
 	    this.each(function(){
 	        $(this).on('submit', submitFunc);
 	        $elements = $(this).find('input,textarea')
 	         .add($('[form="'+$(this).attr('id')+'"]').filter('input,textarea'));
 	        $elements.filter('input[type="text"],input[type="password"],input[type="email"],input[type="search"]input,[type="tel"],'+
 	                         'input:not([type]),textarea').on('blur', textBlur);
+	        $elements.filter('input[type="email"]').on('blur', emailBlur);
 	        $elements.filter('input[type="date"],input[type="time"],input[type="datetime"],input[type="datetime-local"],'+
 	                      'input[type="month"],input[type="week"]').on('blur', dateBlur);
 	        $elements.filter('input[type="number"],input[type="range"]').on('blur', numBlur);
@@ -16,7 +17,6 @@
 	    });
 	    function textBlur(){
 	        var $this = $(this);
-	        if ($this.prop('disabled')) return;
 	        var value = $this.val();
 	        if (value == ''){
 	            if ($this.is('[required]')){
@@ -28,16 +28,42 @@
 	            if ($this.is('[pattern]')){
 	                var pattern = new RegExp('^'+$this.attr('pattern')+'$');
 	                if (!pattern.test(value)){                        
-	                    showPopup($this, 'Enter valid text');
+	                    showPopup($this, $this.attr('title') || 'Enter valid text');
 	                    return;
 	                }
 	            }
 	        }
 	        $this.removeAttr('data-vf-state');
 	    }
+	    //to test
+	    function emailBlur(){
+	        var $this = $(this);
+	        var value = $this.val();
+	        if (value == ''){
+	            if ($this.is('[required]')){
+	                showPopup($this, 'This field is required');
+	                return;
+	            }
+	        }
+	        else{
+	        	if (/^[a-zA-Z0-9.!#$%&’*+/=?^_`{|}~-]+@[a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)*$/.test(value)){	        		
+		            if ($this.is('[pattern]')){
+		                var pattern = new RegExp('^'+$this.attr('pattern')+'$');
+		                if (!pattern.test(value)){                        
+		                    showPopup($this, $this.attr('title') || 'Enter a valid email address');
+		                    return;
+		                }
+		            }
+	        	}
+	        	else{
+                    showPopup($this, 'Enter a valid email address');
+                    return;	        		
+	        	}
+	        }
+	        $this.removeAttr('data-vf-state');
+	    }
 	    function dateBlur(){
 	        var $this = $(this);
-	        if ($this.prop('disabled')) return;
 	        var value = $this.val();
 	        if (value == ''){
 	            if ($this.is('[required]')){
@@ -55,6 +81,7 @@
 	    					//date is valid
 	    					valid = true;
 	    					//but is it in range    						
+	    					//rewrite min/max logic as it is incorrect 	
 	    					if ($this.is('[min]') && validateDate($this.attr('min'))){
 	    						var minDate = dateValueToDate($this.attr('min'));
 	    						if (minDate > dateValueToDate(value)){
@@ -162,7 +189,6 @@
 	    //element.willValidate element.validationMessage
 	    function numBlur(){
 	        var $this = $(this);
-	        if ($this.prop('disabled')) return;
 	        var value = $this.val();
 	        if (value == ''){
 	            if ($this.is('[required]')){
@@ -205,11 +231,27 @@
 	    	return /^-?[0-9]+(\.[0-9]+)?([eE][\+\-]?[0-9]+)?$/.test(value);
 	    }
 	    function urlBlur(){
-	        
+	        var $this = $(this);
+	        var value = $this.val();
+	        if (value == ''){
+	            if ($this.is('[required]')){
+	                showPopup($this, 'This field is required');
+	                return;
+	            }
+	        }
+	        else{
+	            if ($this.is('[pattern]')){
+	                var pattern = new RegExp('^'+$this.attr('pattern')+'$');
+	                if (!pattern.test(value)){                        
+	                    showPopup($this, 'Enter valid text');
+	                    return;
+	                }
+	            }
+	        }
+	        $this.removeAttr('data-vf-state');
 	    }
 	    function colourBlur(){
 	        var $this = $(this);
-	        if ($this.prop('disabled')) return;
 	        var value = $this.val();
 	        if (value == ''){
 	            if ($this.is('[required]')){
@@ -263,7 +305,8 @@
 	            return;
 	        }
 	        var $elements = $this.find('input,textarea,select')
-	             .add($('[form="'+$this.attr('id')+'"]').filter('input,textarea,select'));
+	             .add($('[form="'+$this.attr('id')+'"]').filter('input,textarea,select'))
+	             .not(':disabled');
 	        var $required = $elements.filter('[required]');
 	        var $invalid = $required.filter('[data-vf-state]');
 	        var $validate = $required.not('[data-vf-state]');
