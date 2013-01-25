@@ -2,9 +2,15 @@
 <meta charset=UTF-8>
 <title>Test validate html5 form</title>
 <body>
-<form id=1 data-vhf>
-    <input name=name required pattern=[^\^\$\\`~!@#%&amp;\*\(\)\-=\[\]\|;:&apos;&quot;<\x3e\?]+>
+<form id=1 data-vhf novalidate>
+    <input name=name required pattern=[^\^\$\\`~!@#%&amp;%&#x20;\*\(\)\-=\[\]\|;:&apos;&quot;<\x3e\?]+>
+    <input type=radio name=name required>
+    <input type=radio name=name required>
+    <input type=checkbox name=name required>
+    <input type=checkbox name=name required>
     <keygen name=key>
+    <input type=radio name=name required>
+    <input type=text name=x dirname=ltr required>
     <input type=submit>
 </form>
 <input type=number name=number form=1 required min=2000-01-01>

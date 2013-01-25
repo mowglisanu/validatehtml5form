@@ -1,6 +1,8 @@
 (function($){
+	if (!$){
+		throw 'jQuery is not loaded: validatehtml5form';
+	}
 	$.fn.validateHtml5Form = function(){
-	    var emrx = /^[a-zA-Z0-9.!#$%&’*+/=?^_`{|}~-]+@[a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)*$/;
 	    this.each(function(){
 	        $(this).on('submit', submitFunc);
 	        $elements = $(this).find('input,textarea')
@@ -9,11 +11,10 @@
 	                         'input:not([type]),textarea').on('blur', textBlur);
 	        $elements.filter('input[type="email"]').on('blur', emailBlur);
 	        $elements.filter('input[type="date"],input[type="time"],input[type="datetime"],input[type="datetime-local"],'+
-	                      'input[type="month"],input[type="week"]').on('blur', dateBlur);
+	                         'input[type="month"],input[type="week"]').on('blur', dateBlur);
 	        $elements.filter('input[type="number"],input[type="range"]').on('blur', numBlur);
 	        $elements.filter('input[type="url"]').on('blur', urlBlur);
-	        $elements.filter('input[type="color"]').on('blur', colourBlur);
-	        
+	        $elements.filter('input[type="color"]').on('blur', colourBlur);	        
 	    });
 	    function textBlur(){
 	        var $this = $(this);
@@ -39,6 +40,7 @@
 	    function emailBlur(){
 	        var $this = $(this);
 	        var value = $this.val();
+	        var multiple = $this.is('[multiple]');
 	        if (value == ''){
 	            if ($this.is('[required]')){
 	                showPopup($this, 'This field is required');
@@ -46,18 +48,27 @@
 	            }
 	        }
 	        else{
-	        	if (/^[a-zA-Z0-9.!#$%&’*+/=?^_`{|}~-]+@[a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)*$/.test(value)){	        		
-		            if ($this.is('[pattern]')){
-		                var pattern = new RegExp('^'+$this.attr('pattern')+'$');
-		                if (!pattern.test(value)){                        
-		                    showPopup($this, $this.attr('title') || 'Enter a valid email address');
-		                    return;
-		                }
-		            }
+	        	var values = new Array();
+	        	if (multiple){
+	        		values = value.split(',');
 	        	}
 	        	else{
-                    showPopup($this, 'Enter a valid email address');
-                    return;	        		
+	        		values.push(value);
+	        	}
+	        	for (var i = 0; i < values.length; i++){	        		
+		        	if (/^[a-zA-Z0-9.!#$%&’*+/=?^_`{|}~-]+@[a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)*$/.test(values[i])){	        		
+			            if ($this.is('[pattern]')){
+			                var pattern = new RegExp('^'+$this.attr('pattern')+'$');
+			                if (!pattern.test(values[i])){                        
+			                    showPopup($this, $this.attr('title') || multiple?'Enter a valid list of comma separated emai addresses':'Enter a valid email address');
+			                    return;
+			                }
+			            }
+		        	}
+		        	else{
+	                    showPopup($this, 'Enter a valid email address');
+	                    return;	        		
+		        	}
 	        	}
 	        }
 	        $this.removeAttr('data-vf-state');
@@ -243,7 +254,7 @@
 	            if ($this.is('[pattern]')){
 	                var pattern = new RegExp('^'+$this.attr('pattern')+'$');
 	                if (!pattern.test(value)){                        
-	                    showPopup($this, 'Enter valid text');
+	                    showPopup($this, 'Enter valid url');
 	                    return;
 	                }
 	            }
@@ -265,11 +276,18 @@
 	        }
 	        $this.removeAttr('data-vf-state');
 	    }
+	    function rcBlur(){
+	        if (!this.is(':checked')){
+                showPopup(this.last(), 'Please select an option.');
+                return;
+	        }
+	        $this.removeAttr('data-vf-state');
+	    }
 	    function showPopup($element, message){
 	        $element.attr('data-vf-state', message);
 	        var width = $element.width();
 	        var height = $element.height();
-	        $popup = $('<span>', {'class': 'fv-invalig-message'})
+	        $popup = $('<span>', {'class': 'fv-invalid-message'})
 	         .css({opacity:0, position:'relative', left: -width, top: 12, color: 'black', 'text-align': 'center'});
 	        $inner = $('<span>', {text: message}).css({width: '10em', position: 'absolute', 'z-index': 9999, 
 	                                              top: 0, 'border-radius': 5, border: '1px solid red', background: 'white',
@@ -290,7 +308,7 @@
 	        setTimeout(function(){
 	        	$(document).on('click', function pc(event){
 			    	if (!$(event.target).is($pcelements)){
-			    		$('.fv-invalig-message').fadeOut(function(){
+			    		$('.fv-invalid-message').fadeOut(function(){
 			    			$(this).remove();
 			    		});
 			    		$(document).off('click', pc);
@@ -317,6 +335,31 @@
 	        $validate.filter('input[type="number"],input[type="range"]').each(function(){numBlur.call(this);});
 	        $validate.filter('input[type="url"]').each(function(){urlBlur.call(this);});
 	        $validate.filter('input[type="color"]').each(function(){colourBlur.call(this);});
+	        //checkboxes and radio buttons t.b.c.
+	        var groups;
+	        function rcEach(){
+	        	var $this = $(this);
+	        	var name = $this.attr('name');
+	        	if (name){	        		
+		        	if (!(name in groups)){
+		        		groups[name] = this;
+		        	}
+	        	}
+	        	else{
+	        		rcBlur.call($this);
+	        	}
+	        }
+	        groups = {};
+	        $validate.filter('input[type="radio"]').each(rcEach);
+	        $.each(groups, function(k,v){
+	        	rcBlur.call($validate.filter('input[type="radio"][name="'+k+'"]'));
+	        });
+	        groups = {};
+	        $validate.filter('input[type="checkbox"]').each(rcEach);
+	        $.each(groups, function(k,v){
+	        	rcBlur.call($validate.filter('input[type="checkbox"][name="'+k+'"]'));
+	        });
+	        
 	        $validate.filter('select').each(function(){
 	            if ($(this).val() == ''){
 	                showPopup($(this), 'This field is required');
