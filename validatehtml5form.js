@@ -66,7 +66,7 @@
 			            }
 		        	}
 		        	else{
-	                    showPopup($this, 'Enter a valid email address');
+	                    showPopup($this, $this.attr('title') || 'Enter a valid email address');
 	                    return;	        		
 		        	}
 	        	}
@@ -284,6 +284,9 @@
 	        $this.removeAttr('data-vf-state');
 	    }
 	    function showPopup($element, message){
+	    	$('.fv-invalid-message').fadeOut(function(){
+			    $(this).remove();
+			});
 	        $element.attr('data-vf-state', message);
 	        var width = $element.width();
 	        var height = $element.height();
@@ -306,16 +309,21 @@
 	        $popup.animate({top:height+12, opacity:1});
 	        $pcelements = $inner.add($notch).add($notchunder);
 	        setTimeout(function(){
-	        	$(document).on('click', function pc(event){
+	        	$(document).on('click.vh5f', function pc(event){
 			    	if (!$(event.target).is($pcelements)){
 			    		$('.fv-invalid-message').fadeOut(function(){
 			    			$(this).remove();
 			    		});
 			    		$(document).off('click', pc);
+			    		$element.off('focus.vh5f');
 			    	}
 		    	});
-	    	}, 200);
-	    	//$('body').append(width+" "+height);
+		    	$element.one('focus.vh5f', function(){
+		    		$element.next('.fv-invalid-message').remove();
+		    		$(document).off('click.vh5f');
+		    	})
+	    	}, 200);//need a fix for this
+	    	
 	    }
 	    function submitFunc(event){
 	        var $this = $(this);
@@ -329,7 +337,10 @@
 	        var $invalid = $required.filter('[data-vf-state]');
 	        var $validate = $required.not('[data-vf-state]');
 	        $validate.filter('input[type="text"],input[type="password"],input[type="email"],input[type="search"]input,[type="tel"],'+
-	                         'input:not([type]),textarea').each(function(){textBlur.call(this);});
+	                         'input:not([type]),textarea').each(function(){
+	                         										textBlur.call(this);
+	                         										//return $(this).is(['[data-vf-state]']);
+	                         									});
 	        $validate.filter('input[type="date"],input[type="time"],input[type="datetime"],input[type="datetime-local"],'+
 	                      'input[type="month"],input[type="week"]').each(function(){dateBlur.call(this);});
 	        $validate.filter('input[type="number"],input[type="range"]').each(function(){numBlur.call(this);});
